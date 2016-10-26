@@ -1,19 +1,6 @@
 package psq;
 
-import clojure.lang.AFn;
-import clojure.lang.APersistentMap;
-import clojure.lang.Box;
-import clojure.lang.Indexed;
-import clojure.lang.IObj;
-import clojure.lang.IPersistentMap;
-import clojure.lang.ISeq;
-import clojure.lang.LazySeq;
-import clojure.lang.MapEntry;
-import clojure.lang.PersistentList;
-import clojure.lang.PersistentVector;
-import clojure.lang.Reversible;
-import clojure.lang.RT;
-import clojure.lang.Sorted;
+import clojure.lang.*;
 
 import java.util.Comparator;
 import java.util.Iterator;
@@ -32,13 +19,13 @@ public final class PersistentPrioritySearchQueue
     static public final PersistentPrioritySearchQueue EMPTY =
             new PersistentPrioritySearchQueue();
 
-    public final Winner winner;
+    private final Winner winner;
 
-    public final Comparator kcomp;
-    public final Comparator pcomp;
+    private final Comparator kcomp;
+    private final Comparator pcomp;
 
-    final int _count;
-    final IPersistentMap _meta;
+    private final int count;
+    private final IPersistentMap meta;
 
     static public IPersistentMap create(Map other) {
         IPersistentMap ret = EMPTY;
@@ -52,7 +39,7 @@ public final class PersistentPrioritySearchQueue
     static public PersistentPrioritySearchQueue create(Object... init) {
         IPersistentMap ret = EMPTY;
         for (int i = 0; i < init.length; i += 2) {
-            ret = ret.assoc(init[i], init[i+1]);
+            ret = ret.assoc(init[i], init[i + 1]);
         }
         return (PersistentPrioritySearchQueue) ret;
     }
@@ -61,7 +48,7 @@ public final class PersistentPrioritySearchQueue
                                                        Object... init) {
         IPersistentMap ret = (IPersistentMap) EMPTY.withMeta(meta);
         for (int i = 0; i < init.length; i += 2) {
-            ret = ret.assoc(init[i], init[i+1]);
+            ret = ret.assoc(init[i], init[i + 1]);
         }
         return (PersistentPrioritySearchQueue) ret;
     }
@@ -71,7 +58,7 @@ public final class PersistentPrioritySearchQueue
                                                        Object... init) {
         IPersistentMap ret = new PersistentPrioritySearchQueue(kcomp, pcomp);
         for (int i = 0; i < init.length; i += 2) {
-            ret = ret.assoc(init[i], init[i+1]);
+            ret = ret.assoc(init[i], init[i + 1]);
         }
         return (PersistentPrioritySearchQueue) ret;
     }
@@ -82,7 +69,7 @@ public final class PersistentPrioritySearchQueue
                                                        Object... init) {
         IPersistentMap ret = new PersistentPrioritySearchQueue(kcomp, pcomp, meta);
         for (int i = 0; i < init.length; i += 2) {
-            ret = ret.assoc(init[i], init[i+1]);
+            ret = ret.assoc(init[i], init[i + 1]);
         }
         return (PersistentPrioritySearchQueue) ret;
     }
@@ -127,8 +114,8 @@ public final class PersistentPrioritySearchQueue
         this.winner = null;
         this.kcomp = kcomp;
         this.pcomp = pcomp;
-        this._meta = meta;
-        this._count = 0;
+        this.meta = meta;
+        this.count = 0;
     }
 
     PersistentPrioritySearchQueue(Winner winner,
@@ -139,16 +126,16 @@ public final class PersistentPrioritySearchQueue
         this.winner = winner;
         this.kcomp = kcomp;
         this.pcomp = pcomp;
-        this._meta = meta;
-        this._count = count;
+        this.meta = meta;
+        this.count = count;
     }
 
     public static final class Winner {
 
-        public final Object key;
-        public final Object priority;
-        public final Loser losers;
-        public final Object ubound;
+        private final Object key;
+        private final Object priority;
+        private final Loser losers;
+        private final Object ubound;
 
         Winner(Object key, Object priority, Loser losers, Object ubound) {
             this.key = key;
@@ -157,6 +144,21 @@ public final class PersistentPrioritySearchQueue
             this.ubound = ubound;
         }
 
+        public Object getKey() {
+            return key;
+        }
+
+        public Object getPriority() {
+            return priority;
+        }
+
+        public Loser getLosers() {
+            return losers;
+        }
+
+        public Object getUbound() {
+            return ubound;
+        }
     }
 
     public static final class Loser {
@@ -209,7 +211,8 @@ public final class PersistentPrioritySearchQueue
         public Object rubound;
         public boolean found;
 
-        MatchFrame() {}
+        MatchFrame() {
+        }
 
         MatchFrame(Winner winner) {
             hasLeft = true;
@@ -396,25 +399,21 @@ public final class PersistentPrioritySearchQueue
             return new Winner(
                     left.key,
                     lp,
-                    balance(
-                            right.key,
+                    balance(right.key,
                             rp,
                             left.losers,
                             left.ubound,
-                            right.losers
-                    ),
+                            right.losers),
                     right.ubound
             );
         return new Winner(
                 right.key,
                 rp,
-                balance(
-                        left.key,
+                balance(left.key,
                         lp,
                         left.losers,
                         left.ubound,
-                        right.losers
-                ),
+                        right.losers),
                 right.ubound
         );
     }
@@ -924,7 +923,7 @@ public final class PersistentPrioritySearchQueue
         Match split = split(winner, splitKey, splitEntry);
         Object left = null, right = null;
         int lsize = split.left == null ? 0 : rank(split.left.ubound) + 1;
-        int rsize = _count - lsize;
+        int rsize = count - lsize;
         if (splitEntry.val != null)
             rsize -= 1;
         if (split.left != null)
@@ -969,7 +968,7 @@ public final class PersistentPrioritySearchQueue
         if (isEmpty())
             return -1;
         if (kcomp.compare(winner.ubound, key) == 0)
-            return _count - 1;
+            return count - 1;
         int rank = 0;
         for (Loser loser = winner.losers; loser != null; ) {
             int c = kcomp.compare(key, loser.split);
@@ -988,13 +987,13 @@ public final class PersistentPrioritySearchQueue
 
     // helpers
 
-    Object throwUnsupported() {
-        throw new UnsupportedOperationException();
-    }
-
     static ISeq concat(ISeq xs, ISeq ys) {
         // NB. relying on an implementation detail
         return (ISeq) clojure.core$concat.invokeStatic(xs, ys);
+    }
+
+    public Winner getWinner() {
+        return winner;
     }
 
     // clojure.lang.Associative
@@ -1008,9 +1007,9 @@ public final class PersistentPrioritySearchQueue
                 newWinner,
                 kcomp,
                 pcomp,
-                // found.val != null ? _count : _count + 1,
-                mf.found ? _count : _count + 1,
-                _meta
+                // found.val != null ? count : count + 1,
+                mf.found ? count : count + 1,
+                meta
         );
     }
 
@@ -1025,7 +1024,7 @@ public final class PersistentPrioritySearchQueue
     // clojure.lang.Counted
 
     public int count() {
-        return _count;
+        return count;
     }
 
     // clojure.lang.ILookup
@@ -1044,7 +1043,7 @@ public final class PersistentPrioritySearchQueue
     // clojure.lang.IMeta
 
     public IPersistentMap meta() {
-        return _meta;
+        return meta;
     }
 
     // clojure.lang.Indexed
@@ -1054,9 +1053,9 @@ public final class PersistentPrioritySearchQueue
     }
 
     public Object nth(int i, Object notFound) {
-        if (i < 0 || i >= _count)
+        if (i < 0 || i >= count)
             throw new IndexOutOfBoundsException();
-        if (i == _count - 1)
+        if (i == count - 1)
             return entryAt(winner.ubound);
         Loser loser = winner.losers;
         while (loser != null) {
@@ -1083,7 +1082,7 @@ public final class PersistentPrioritySearchQueue
     // clojure.lang.IPersistentCollection
 
     public PersistentPrioritySearchQueue empty() {
-        return new PersistentPrioritySearchQueue(kcomp, pcomp, _meta);
+        return new PersistentPrioritySearchQueue(kcomp, pcomp, meta);
     }
 
     // clojure.lang.IPersistentMap
@@ -1094,8 +1093,8 @@ public final class PersistentPrioritySearchQueue
                 delete(k, winner, found),
                 kcomp,
                 pcomp,
-                found.val != null ? _count - 1 : _count,
-                _meta
+                found.val != null ? count - 1 : count,
+                meta
         );
     }
 
@@ -1108,8 +1107,8 @@ public final class PersistentPrioritySearchQueue
                 newWinner,
                 kcomp,
                 pcomp,
-                _count + 1,
-                _meta
+                count + 1,
+                meta
         );
     }
 
@@ -1126,15 +1125,15 @@ public final class PersistentPrioritySearchQueue
                 secondBest(winner.losers, winner.ubound),
                 kcomp,
                 pcomp,
-                _count - 1,
-                _meta
+                count - 1,
+                meta
         );
     }
 
     // clojure.lang.Reversible
 
     public ISeq rseq() {
-        if (_count == 0)
+        if (count == 0)
             return null;
         return rtraverse(winner.key, winner.priority, winner.losers);
     }
@@ -1142,7 +1141,7 @@ public final class PersistentPrioritySearchQueue
     // clojure.lang.Seqable
 
     public ISeq seq() {
-        if (_count == 0)
+        if (count == 0)
             return null;
         return traverse(winner.key, winner.priority, winner.losers);
     }
@@ -1156,7 +1155,7 @@ public final class PersistentPrioritySearchQueue
     }
 
     public ISeq seqFrom(Object k, boolean ascending) {
-        if (_count == 0)
+        if (count == 0)
             return null;
         ISeq ret;
         if (ascending)

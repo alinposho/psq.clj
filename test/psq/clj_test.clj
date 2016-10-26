@@ -49,11 +49,11 @@
 (defn satisfies-invariant? [psq]
   (if (empty? psq)
     true
-    (let [winner (.-winner ^psq.PersistentPrioritySearchQueue$Winner psq)
-          wkey (.-key winner)
-          wpriority (.-priority winner)
-          wlosers (.-losers winner)
-          wubound (.-ubound winner)
+    (let [winner (.getWinner ^psq.PersistentPrioritySearchQueue$Winner psq)
+          wkey (.getKey winner)
+          wpriority (.getPriority winner)
+          wlosers (.getLosers winner)
+          wubound (.getUbound winner)
           wlset (loser-set wlosers)
           wlentries (map loser->entry wlset)
           wkeyset (conj (set (map key wlentries)) wkey)]

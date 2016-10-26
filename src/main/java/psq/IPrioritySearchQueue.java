@@ -6,11 +6,11 @@ import clojure.lang.ISeq;
 
 public interface IPrioritySearchQueue extends IPersistentStack {
 
-    ISeq atMost(Object priority);
+    <T> ISeq atMost(T priority);
 
-    ISeq atMostRange(Object low, Object high, Object priority);
+    <L, H, P> ISeq atMostRange(L low, H high, P priority);
 
-    ISeq reverseAtMost(Object priority);
+    <P> ISeq reverseAtMost(P priority);
 
-    ISeq reverseAtMostRange(Object low, Object high, Object priority);
+    <L, H, P> ISeq reverseAtMostRange(L low, H high, P priority);
 }
